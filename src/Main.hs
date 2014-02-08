@@ -171,7 +171,7 @@ tellCmd from to arg = do
           now <- liftIO $ utctDay `liftM` getCurrentTime
           modify . M.insertWith (flip (++)) fromNick $ [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
           msgIRC chan "\\_o<"
-        | otherwise = msgIRC chan "of course; even MMyErS wouldn’t say such bullshit!"
+        | otherwise = msgIRC chan "of course; even MMyErS wouldn't say such bullshit!"
     (fromNick,msg) = second tailSafe . break (==' ') $ arg
 
 helpCmd :: String -> String -> String -> Session ()
