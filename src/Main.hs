@@ -6,6 +6,7 @@ import Control.Monad.Trans.RWS
 import Data.Bifunctor ( second )
 import Data.List ( isPrefixOf )
 import Data.List.Split ( splitOn )
+import Data.Time.Clock ( getCurrentTime, utctDay )
 import qualified Data.Map as M
 import Network
 import System.Environment ( getArgs )
@@ -35,7 +36,7 @@ ircPort :: Int
 ircPort = 6667
 
 ircNick :: String
-ircNick = "asskel"
+ircNick = "kwak"
 
 session :: ConInfo -> Session a -> IO a
 session cinfo s = do
@@ -97,7 +98,10 @@ quitChan :: Session ()
 quitChan = toIRC "QUIT"
 
 ircSession :: Session ()
-ircSession = forever $ fromIRC >>= onContent . tail
+ircSession = forever $ fromIRC >>= onContent . purgeContent
+
+purgeContent :: String -> String
+purgeContent = filter (\c -> not $ c `elem` "\n\r")
 
 onContent :: String -> Session ()
 onContent c = do
@@ -105,7 +109,7 @@ onContent c = do
     treat
   where
     treat
-        | isMsg c   = treatMsg c
+        | isMsg c   = treatMsg (tail c)
         | isPing c  = treatPing c
         | otherwise = return ()
 
@@ -129,8 +133,10 @@ treatMsg msg = do
     liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ msgContent
     unless ( null content || from == nick ) $ do
         -- look for queuing message
-        queuing <- gets (maybeToList . M.lookup fromNick)
-        --unless ( null queuing ) $ tellBack fromNick queuing
+        stories <- gets (maybeToList . M.lookup fromNick)
+        unless ( null stories ) $ do
+          mapM_ (msgIRC chan) . concat $ stories
+          modify (M.delete fromNick)
         when ( head msgContent == '!') $ do
           onCmd fromNick to (tail msgContent)
   where
@@ -143,8 +149,8 @@ onCmd from to msg = do
     liftIO . putStrLn $ "searching command " ++ cmd ++ ": " ++ show found
     maybe unknownCmd treatCmd (M.lookup cmd commands)
   where
-    (cmd,arg)  = second tail . break (==' ') $ msg
-    unknownCmd = asks conChan >>= \chan -> msgIRC chan $ cmd ++ ", c’est quoi cette connerie encore ?! (help pour la liste, la vraie)"
+    (cmd,arg)  = second tailSafe . break (==' ') $ msg
+    unknownCmd = return () -- asks conChan >>= \chan -> msgIRC chan $ cmd ++ ", what the heck is that again?! (you might want !help)"
     treatCmd c = c from to arg
     found = cmd `M.member` commands
 
@@ -161,19 +167,16 @@ tellCmd from to arg = do
     treat chan
   where
     treat chan
-        | length arg > 1 = do
-          modify . M.insertWith (++) fromNick $ ["message de " ++ from ++ " : " ++ msg]
-          msgIRC chan $ "ok " ++ from ++ ", je le dirai à " ++ fromNick ++ " ;)"
-        | otherwise = msgIRC chan "c’est cela oui, on dirait MMyErS qui parle là…"
-    (fromNick,msg) = second tail . break (==' ') $ arg
+        | length arg > 1 && not (null msg) = do
+          now <- liftIO $ utctDay `liftM` getCurrentTime
+          modify . M.insertWith (flip (++)) fromNick $ [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
+          msgIRC chan "\\_o<"
+        | otherwise = msgIRC chan "of course; even MMyErS wouldn’t say such bullshit!"
+    (fromNick,msg) = second tailSafe . break (==' ') $ arg
 
 helpCmd :: String -> String -> String -> Session ()
 helpCmd _ _ _ = do
     chan <- asks conChan
-    msgIRC chan $ "!help         : cette même aide, abruti"
-    msgIRC chan $ "!tell dest msg: laisse un message msg à dest"
-
-tellBack :: String -> [String] -> Session ()
-tellBack from queuing = do
-    --sequence_ . map (msgIRC from) $ queuing
-    return ()
+    msgIRC chan $ "!help         : this help, you dumb"
+    msgIRC chan $ "!tell dest msg: leave a message to a beloved"
+    msgIRC chan $ "written in Haskell (ahah!) by skypers with a lot of luv <3"

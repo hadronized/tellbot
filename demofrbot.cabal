@@ -24,5 +24,7 @@ executable demofrbot
                      , split        == 0.2.*
                      , containers   == 0.4.*
                      , bifunctors   == 4.1.*
+                     , time         == 1.4.*
   hs-source-dirs:      src
+  ghc-options:         -static -O2
   default-language:    Haskell2010
