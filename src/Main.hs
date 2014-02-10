@@ -1,11 +1,12 @@
+import Control.Concurrent ( threadDelay )
 import Control.Error
 import Control.Monad
 import Control.Monad.Identity
 import Control.Monad.Trans
 import Control.Monad.Trans.RWS
 import Data.Bifunctor ( second )
-import Data.List ( isPrefixOf )
-import Data.List.Split ( splitOn )
+import Data.List ( intersperse, isPrefixOf )
+import Data.List.Split ( chunksOf, splitOn )
 import Data.Time.Clock ( getCurrentTime, utctDay )
 import qualified Data.Map as M
 import Network
@@ -37,6 +38,12 @@ ircPort = 6667
 
 ircNick :: String
 ircNick = "kwak"
+
+floodThreshold :: Int
+floodThreshold = 3
+
+floodDelay :: Int
+floodDelay = 500000
 
 session :: ConInfo -> Session a -> IO a
 session cinfo s = do
@@ -150,7 +157,7 @@ onCmd from to msg = do
     maybe unknownCmd treatCmd (M.lookup cmd commands)
   where
     (cmd,arg)  = second tailSafe . break (==' ') $ msg
-    unknownCmd = return () -- asks conChan >>= \chan -> msgIRC chan $ cmd ++ ", what the heck is that again?! (you might want !help)"
+    unknownCmd = return ()
     treatCmd c = c from to arg
     found = cmd `M.member` commands
 
@@ -169,9 +176,10 @@ tellCmd from to arg = do
     treat chan
         | length arg > 1 && not (null msg) = do
           now <- liftIO $ utctDay `liftM` getCurrentTime
-          modify . M.insertWith (flip (++)) fromNick $ [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
+          modify . M.insertWith (flip (++)) fromNick $
+            [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
           msgIRC chan "\\_o<"
-        | otherwise = msgIRC chan "of course; even MMyErS wouldn't say such bullshit!"
+        | otherwise = msgIRC chan "nope!"
     (fromNick,msg) = second tailSafe . break (==' ') $ arg
 
 helpCmd :: String -> String -> String -> Session ()
@@ -180,3 +188,15 @@ helpCmd _ _ _ = do
     msgIRC chan $ "!help         : this help, you dumb"
     msgIRC chan $ "!tell dest msg: leave a message to a beloved"
     msgIRC chan $ "written in Haskell (ahah!) by skypers with a lot of luv <3"
+
+tellStories :: String -> Session ()
+tellStories nick = do
+    chan    <- asks conChan
+    stories <- gets (maybeToList . M.lookup nick)
+    let
+      cstories = concat stories
+      chunks = map (mapM_ $ msgIRC chan) . chunksOf floodThreshold $ cstories
+      tells  = intersperse (liftIO $ threadDelay floodDelay) chunks
+    unless (null stories) $ do
+      sequence_ tells
+      modify (M.delete nick)
