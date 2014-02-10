@@ -139,11 +139,7 @@ treatMsg msg = do
     nick <- asks conNick
     liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ msgContent
     unless ( null content || from == nick ) $ do
-        -- look for queuing message
-        stories <- gets (maybeToList . M.lookup fromNick)
-        unless ( null stories ) $ do
-          mapM_ (msgIRC chan) . concat $ stories
-          modify (M.delete fromNick)
+        tellStories fromNick
         when ( head msgContent == '!') $ do
           onCmd fromNick to (tail msgContent)
   where
@@ -189,6 +185,7 @@ helpCmd _ _ _ = do
     msgIRC chan $ "!tell dest msg: leave a message to a beloved"
     msgIRC chan $ "written in Haskell (ahah!) by skypers with a lot of luv <3"
 
+-- FIXME: host & ident
 tellStories :: String -> Session ()
 tellStories nick = do
     chan    <- asks conChan
