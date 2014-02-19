@@ -8,10 +8,14 @@ import Data.Bifunctor ( second )
 import Data.List ( intersperse, isPrefixOf )
 import Data.List.Split ( chunksOf, splitOn )
 import Data.Time.Clock ( getCurrentTime, utctDay )
+import Data.Version
 import qualified Data.Map as M
 import Network
 import System.Environment ( getArgs )
 import System.IO
+
+version :: Version
+version = Version [0,2,0,0] ["bottoms","up!"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -64,6 +68,7 @@ runFailableIO = runEitherT
 
 main :: IO ()
 main = do
+    putStrLn . showVersion $ version
     args <- getArgs
     runFailableIO (start args) >>= either errLn return
 
@@ -115,16 +120,22 @@ onContent c = do
     liftIO (putStrLn c)
     treat
   where
+    tailC = tail c
     treat
-        | isMsg c   = treatMsg (tail c)
+        | isMsg c   = treatMsg tailC
+        | isJoin c  = treatJoin tailC
         | isPing c  = treatPing c
         | otherwise = return ()
 
+-- FIXME: those functions are not really safe and might be flaws
 isPing :: String -> Bool
 isPing c = "PING" `elem` words c
 
 isMsg :: String -> Bool
 isMsg c = "PRIVMSG" `elem` words c
+
+isJoin :: String -> Bool
+isJoin c = "JOIN" `elem` words c
 
 treatPing :: String -> Session ()
 treatPing ping = do
@@ -137,15 +148,27 @@ treatMsg :: String -> Session ()
 treatMsg msg = do
     chan <- asks conChan
     nick <- asks conNick
-    liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ msgContent
-    unless ( null content || from == nick ) $ do
-        tellStories fromNick
-        when ( head msgContent == '!') $ do
-          onCmd fromNick to (tail msgContent)
+    liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ content
+    unless ( null content || fromNick == nick ) $ do
+        when ( head content == '!') $ do
+          onCmd fromNick to (tail content)
   where
-    (from:_:to:content) = splitOn " " msg
-    msgContent = tail $ unwords content
-    fromNick = fst . break (=='!') $ from
+    (fromNick,to,content) = emitterRecipientContent msg
+
+treatJoin :: String -> Session ()
+treatJoin msg = do
+    nick <- asks conNick
+    unless (from == nick) $ tellStories from
+  where
+    (from,to,_) = emitterRecipientContent msg
+
+-- Extract the emitter, the recipient and the message.
+emitterRecipientContent :: String -> (String,String,String)
+emitterRecipientContent msg = (from,to,content)
+  where
+    (from':_:to:content') = splitOn " " msg
+    from                  = fst . break (=='!') $ from'
+    content               = tailSafe (unwords content')
 
 onCmd :: String -> String -> String -> Session ()
 onCmd from to msg = do
@@ -183,6 +206,7 @@ helpCmd _ _ _ = do
     chan <- asks conChan
     msgIRC chan $ "!help         : this help, you dumb"
     msgIRC chan $ "!tell dest msg: leave a message to a beloved"
+    msgIRC chan . showVersion $ version
     msgIRC chan $ "written in Haskell (ahah!) by skypers with a lot of luv <3"
 
 -- FIXME: host & ident
