@@ -189,15 +189,22 @@ commands = M.fromList
 
 tellCmd :: String -> String -> String -> Session ()
 tellCmd from to arg = do
-    chan <- asks conChan
+    chan           <- asks conChan
     treat chan
   where
     treat chan
         | length arg > 1 && not (null msg) = do
-          now <- liftIO $ utctDay `liftM` getCurrentTime
-          modify . M.insertWith (flip (++)) fromNick $
-            [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
-          msgIRC chan "\\_o<"
+          userPresent <- do
+            chan <- asks conChan
+            toIRC $ "NAMES " ++ chan
+            (elem fromNick . words) `liftM` fromIRC
+          if userPresent then
+            msgIRC chan "that folk is just there you idiot."
+            else do
+              now <- liftIO $ utctDay `liftM` getCurrentTime
+              modify . M.insertWith (flip (++)) fromNick $
+                [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
+              msgIRC chan "\\_o<"
         | otherwise = msgIRC chan "nope!"
     (fromNick,msg) = second tailSafe . break (==' ') $ arg
 
