@@ -3,8 +3,8 @@ tellbot CHANGELOG
 
 # 0.2.0.1
 
-- added support for IRC server anti-DDoS and netsplit
-- the bot tries to rejoin the room if kicked
+- Added support for IRC server anti-DDoS and netsplit
+- The bot tries to rejoin the room if kicked
 
 # 0.2.0.0
 
