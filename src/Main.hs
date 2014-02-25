@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,2,0,1] ["drunk","as","fuck!"]
+version = Version [0,2,1,0] ["drunk","as","fuck!"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -138,7 +138,7 @@ onContent c = do
     treat
         | isMsg c   = treatMsg tailC
         | isJoin c  = treatJoin tailC
-        | isKick c  = treatKick tailC
+        | isKick c  = treatKick c
         | isPing c  = treatPing c
         | otherwise = return ()
 
@@ -189,7 +189,9 @@ treatKick msg = do
       joinChan
       msgIRC chan $ from ++ ": you sonavabitch."
   where
-    (from,_,kicked) = emitterRecipientContent msg
+    (from',to,content) = emitterRecipientContent msg
+    from               = tailSafe from'
+    kicked             = tailSafe $ dropWhile (/=':') content
       
 -- Extract the emitter, the recipient and the message.
 emitterRecipientContent :: String -> (String,String,String)
@@ -230,7 +232,7 @@ tellCmd from to arg = do
               userPresent <- do
                 chan <- asks conChan
                 toIRC $ "NAMES " ++ chan
-                names <- (filter $ \c -> not $ c `elem` "?@!#") `liftM` fromIRC
+                names <- (filter $ \c -> not $ c `elem` "?@!#:") `liftM` fromIRC
                 liftIO . putStrLn $ "names: " ++ names
                 return (fromNick `elem` words names)
               if userPresent then
