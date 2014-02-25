@@ -1,6 +1,6 @@
-name:                demofrbot
-version:             0.2.0.0
-synopsis:            #demofr teller
+name:                tellbot
+version:             0.2.0.1
+synopsis:            IRC tellbot
 -- description:         
 license:             GPL-3
 license-file:        LICENSE
