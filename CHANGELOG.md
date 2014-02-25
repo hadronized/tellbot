@@ -9,9 +9,9 @@ tellbot CHANGELOG
 # 0.2.0.0
 
 - Fixed flood attempts
-- Changed !tell behavior; now the tellbot will refuse to record your message if
+- Changed `!tell` behavior; now the tellbot will refuse to record your message(s) if
   the recipient is already in the same room as you and the tellbot – the
-  recipient has to be out of the room – and it will tell the message(s) when
+  recipient has to be out off the room – and it will tell the message(s) when
   the recipient joins
 
 # 0.1.0.0
