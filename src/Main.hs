@@ -1,4 +1,5 @@
 import Control.Concurrent ( threadDelay )
+import Control.Exception ( SomeException, try )
 import Control.Error
 import Control.Monad
 import Control.Monad.Identity
@@ -15,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,2,0,0] ["bottoms","up!"]
+version = Version [0,2,1,0] ["drunk","as","fuck!"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -47,7 +48,10 @@ floodThreshold :: Int
 floodThreshold = 3
 
 floodDelay :: Int
-floodDelay = 500000
+floodDelay = 500000 -- 500ms
+
+reconnectDelay :: Int
+reconnectDelay = 1000000 -- 1s
 
 session :: ConInfo -> Session a -> IO a
 session cinfo s = do
@@ -68,6 +72,9 @@ runFailableIO = runEitherT
 
 main :: IO ()
 main = do
+    hSetBuffering stdout NoBuffering
+    hSetBuffering stderr NoBuffering
+    
     putStrLn . showVersion $ version
     args <- getArgs
     runFailableIO (start args) >>= either errLn return
@@ -81,19 +88,23 @@ getChan args = do
 start :: [String] -> FailableIO ()
 start args = do
     (serv,chan) <- hoistEither . runFailable $ getChan args
-    liftIO . withSocketsDo $ do
-      putStrLn $ "connecting to " ++ serv
-      h <- connectTo serv (PortNumber . fromIntegral $ ircPort)
-      hSetBuffering stdout NoBuffering
-      hSetBuffering stderr NoBuffering
-      hSetBuffering h NoBuffering
+    liftIO . withSocketsDo $ connectIRC serv chan
 
-      session (ConInfo serv chan nick h) $ do
-        initIRC
-        openChan
-        ircSession
+connectIRC :: Server -> Chan -> IO ()
+connectIRC serv chan = do
+      putStrLn $ "connecting to " ++ serv
+      eitherCon <- try $ do
+        h <- connectTo serv (PortNumber . fromIntegral $ ircPort)
+        hSetBuffering h NoBuffering
+        session (ConInfo serv chan nick h) $ do
+          initIRC
+          openChan
+          ircSession       
+      either reconnect (const $ return ()) eitherCon
   where
     nick = ircNick
+    reconnect :: SomeException -> IO ()
+    reconnect e = err (show e) >> threadDelay reconnectDelay >> connectIRC serv chan
 
 initIRC :: Session ()
 initIRC = do
@@ -104,7 +115,10 @@ openChan :: Session ()
 openChan = do
     chan <- asks conChan
     liftIO . putStrLn $ "joining " ++ chan
-    toIRC $ "JOIN " ++ chan
+    joinChan
+
+joinChan :: Session ()
+joinChan = asks conChan >>= toIRC . ("JOIN "++)
 
 quitChan :: Session ()
 quitChan = toIRC "QUIT"
@@ -124,6 +138,7 @@ onContent c = do
     treat
         | isMsg c   = treatMsg tailC
         | isJoin c  = treatJoin tailC
+        | isKick c  = treatKick tailC
         | isPing c  = treatPing c
         | otherwise = return ()
 
@@ -136,6 +151,9 @@ isMsg c = "PRIVMSG" `elem` words c
 
 isJoin :: String -> Bool
 isJoin c = "JOIN" `elem` words c
+
+isKick :: String -> Bool
+isKick c = "KICK" `elem` words c
 
 treatPing :: String -> Session ()
 treatPing ping = do
@@ -162,6 +180,17 @@ treatJoin msg = do
   where
     (from,to,_) = emitterRecipientContent msg
 
+treatKick :: String -> Session ()
+treatKick msg = do
+    nick <- asks conNick
+    chan <- asks conChan
+    when (kicked == nick) $ do
+      liftIO . putStrLn $ "woah, I was kicked by " ++ from
+      joinChan
+      msgIRC chan $ from ++ ": you sonavabitch."
+  where
+    (from,_,kicked) = emitterRecipientContent msg
+      
 -- Extract the emitter, the recipient and the message.
 emitterRecipientContent :: String -> (String,String,String)
 emitterRecipientContent msg = (from,to,content)
