@@ -1,7 +1,7 @@
 tellbot CHANGELOG
 =================
 
-# 0.2.3.0
+# 0.2.2.0
 
 - The bot now only delivers a message at first message after join.
 
