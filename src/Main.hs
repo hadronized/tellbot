@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,2,1,0] ["drunk","as","fuck!"]
+version = Version [0,2,2,0] ["one","more","please!"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -168,17 +168,21 @@ treatMsg msg = do
     nick <- asks conNick
     liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ content
     unless ( null content || fromNick == nick ) $ do
-        when ( head content == '!') $ do
-          onCmd fromNick to (tail content)
+      tellStories fromNick
+      when ( head content == '!') $ do
+        onCmd fromNick to (tail content)
   where
     (fromNick,to,content) = emitterRecipientContent msg
 
 treatJoin :: String -> Session ()
 treatJoin msg = do
+    return ()
+{-
     nick <- asks conNick
     unless (from == nick) $ tellStories from
   where
     (from,to,_) = emitterRecipientContent msg
+-}
 
 treatKick :: String -> Session ()
 treatKick msg = do
