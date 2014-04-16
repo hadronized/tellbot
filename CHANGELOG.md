@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+# 0.3.0.0
+
+- it’s now possible to pass the nick of the tellbot on the command line
+
 # 0.2.2.0
 
 - The bot now only delivers a message at first message after join.

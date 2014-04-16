@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,2,2,0] ["one","more","please!"]
+version = Version [0,3,0,0] ["un","ptit","pot?!"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -40,9 +40,6 @@ type Stories = M.Map String [String]
 
 ircPort :: Int
 ircPort = 6667
-
-ircNick :: String
-ircNick = "kwak"
 
 floodThreshold :: Int
 floodThreshold = 3
@@ -79,37 +76,37 @@ main = do
     args <- getArgs
     runFailableIO (start args) >>= either errLn return
 
-getChan :: [String] -> Failable (Server,Chan)
+getChan :: [String] -> Failable (Server,Chan,String)
 getChan args = do
-    unless ( length args == 2 ) . left $ "expected server host and chan"
-    let [host,chan] = args
-    return (host,chan)
+    unless ( length args == 3 ) . left $ "expected server host, chan and nick"
+    let [host,chan,nick] = args
+    return (host,chan,nick)
 
 start :: [String] -> FailableIO ()
 start args = do
-    (serv,chan) <- hoistEither . runFailable $ getChan args
-    liftIO . withSocketsDo $ connectIRC serv chan
+    (serv,chan,nick) <- hoistEither . runFailable $ getChan args
+    liftIO . withSocketsDo $ connectIRC serv chan nick
 
-connectIRC :: Server -> Chan -> IO ()
-connectIRC serv chan = do
+connectIRC :: Server -> Chan -> String -> IO ()
+connectIRC serv chan nick = do
       putStrLn $ "connecting to " ++ serv
       eitherCon <- try $ do
         h <- connectTo serv (PortNumber . fromIntegral $ ircPort)
         hSetBuffering h NoBuffering
         session (ConInfo serv chan nick h) $ do
-          initIRC
+          initIRC nick
           openChan
           ircSession       
       either reconnect (const $ return ()) eitherCon
   where
-    nick = ircNick
     reconnect :: SomeException -> IO ()
-    reconnect e = err (show e) >> threadDelay reconnectDelay >> connectIRC serv chan
+    reconnect e =
+        err (show e) >> threadDelay reconnectDelay >> connectIRC serv chan nick
 
-initIRC :: Session ()
-initIRC = do
+initIRC :: String -> Session ()
+initIRC nick = do
     toIRC "USER a b c :d"
-    toIRC $ "NICK " ++ ircNick
+    toIRC $ "NICK " ++ nick
 
 openChan :: Session ()
 openChan = do
