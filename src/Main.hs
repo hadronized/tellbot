@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,0,0] ["un","ptit","pot?!"]
+version = Version [0,3,1,0] ["WoDK"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -261,7 +261,7 @@ tellStories nick = do
     stories <- gets (maybeToList . M.lookup nick)
     let
       cstories = concat stories
-      chunks = map (mapM_ $ msgIRC chan) . chunksOf floodThreshold $ cstories
+      chunks = map (mapM_ $ msgIRC nick) . chunksOf floodThreshold $ cstories
       tells  = intersperse (liftIO $ threadDelay floodDelay) chunks
     unless (null stories) $ do
       sequence_ tells
