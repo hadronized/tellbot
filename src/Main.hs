@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,1,0] ["WoDK"]
+version = Version [0,3,2,0] ["WoDK"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -242,7 +242,7 @@ tellCmd from to arg = do
                   now <- liftIO $ utctDay `liftM` getCurrentTime
                   modify . M.insertWith (flip (++)) fromNick $
                     [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
-                  msgIRC chan "\\_o<"
+                  msgIRC from "\\_o<"
         | otherwise = msgIRC chan "nope!"
     (fromNick,msg) = second tailSafe . break (==' ') $ arg
 
