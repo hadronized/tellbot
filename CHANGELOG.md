@@ -1,6 +1,15 @@
 tellbot CHANGELOG
 =================
 
+# 0.3.2.0
+
+- when a message is recorded for a specific user, the bot now let you know
+  in private
+
+# 0.3.1.0
+
+- tells are now private; the bot still outputs anything else on the channel
+
 # 0.3.0.0
 
 - it’s now possible to pass the nick of the tellbot on the command line
