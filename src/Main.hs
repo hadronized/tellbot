@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,3,0] ["juste","un","doigt"]
+version = Version [0,3,3,1] ["alcohol","IS","a","solution"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -285,7 +285,7 @@ helpCmd _ _ _ = do
     msgIRC chan $ "-   -   say blabla: make " ++ myNick ++ " say something"
     msgIRC chan $ "-   -   kick user0 user1...: kick them all!"
     msgIRC chan . showVersion $ version
-    msgIRC chan $ "written in Haskell (ahah!) by skypers with a lot of luv <3"
+    msgIRC chan $ "written in Haskell by phaazon"
 
 -- FIXME: host & ident
 tellStories :: String -> Session ()
