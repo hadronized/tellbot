@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.4.0.0
+
+- Notices are now limited to the channel (no need to notice one user)
+
 ### 0.3.4.0
 
 - Notices are now available! See the help for further information
