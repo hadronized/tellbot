@@ -1,27 +1,37 @@
 tellbot CHANGELOG
 =================
 
+### 0.3.3.2
+
+- Fallback `!tell` behavior – it was a bad idea; now we can use the command
+  even if the user is there
+- help in private
+
+### 0.3.3.1
+
+- Changed credits
+
 ### 0.3.3.0
 
-- it’s now required to set a password when running the bot on a channel; that
+- It’s now required to set a password when running the bot on a channel; that
   password will be asked when a user attempts to take control of the bot with
   `!do pwd action parameters`; that enables a user to reop, for instance, or
   make the bot say something, or whatever (!help for further information)
-- removed the *!help* output when using `!help`
-- made the bot a bit less rude ;)
+- Removed the *!help* output when using `!help`
+- Made the bot a bit less rude ;)
 
 ### 0.3.2.0
 
-- when a message is recorded for a specific user, the bot now lets you know
+- When a message is recorded for a specific user, the bot now lets you know
   in private
 
 ### 0.3.1.0
 
-- tells are now private; the bot still outputs anything else on the channel
+- Tells are now private; the bot still outputs anything else on the channel
 
 ### 0.3.0.0
 
-- it’s now possible to pass the nick of the tellbot on the command line
+- It’s now possible to pass the nick of the tellbot on the command line
 
 ### 0.2.2.0
 
