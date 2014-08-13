@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,3,1] ["alcohol","IS","a","solution"]
+version = Version [0,3,3,2] ["alcohol","IS","a","solution"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -66,7 +66,10 @@ fromIRC = asks conHandle >>= lift . hGetLine
 msgIRC :: String -> String -> Session ()
 msgIRC to msg = toIRC $ "PRIVMSG " ++ to ++ " :" ++ msg
 
+runFailable :: EitherT e Identity a -> Either e a
 runFailable = runIdentity . runEitherT
+
+runFailableIO :: EitherT e IO a -> IO (Either e a)
 runFailableIO = runEitherT
 
 main :: IO ()
@@ -235,6 +238,8 @@ tellCmd from _ arg = do
           if fromNick == nick then
             msgIRC chan "I'll tell myself for sure pal!"
             else do
+              -- FIXME: issue #2
+              {-
               userPresent <- do
                 toIRC $ "NAMES " ++ chan
                 names <- (filter $ \c -> not $ c `elem` "?@!#:") `liftM` fromIRC
@@ -243,6 +248,7 @@ tellCmd from _ arg = do
               if userPresent then
                 msgIRC chan "don't waste my time; that folk's here"
                 else do
+              -}
                   now <- liftIO $ utctDay `liftM` getCurrentTime
                   modify . M.insertWith (flip (++)) fromNick $
                     [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
@@ -258,7 +264,7 @@ doCmd from to arg = do
     treatDo chan myNick pwd
   where
     treatDo chan myNick pwd
-        | to == chan = msgIRC chan "I'm sorry, I feel naked in public ;)"
+        | to == chan = msgIRC from "I'm sorry, I feel naked in public ;)"
         | to == myNick && length args >= 3 = executeDo chan pwd
         | otherwise = msgIRC from "huhu, something went terribly wrong!"
     args = words arg
@@ -275,17 +281,16 @@ doCmd from to arg = do
     mode chan m = "MODE " ++ chan ++ " " ++ m ++ " "
 
 helpCmd :: String -> String -> String -> Session ()
-helpCmd _ _ _ = do
-    chan <- asks conChan
+helpCmd from _ _ = do
     myNick <- asks conNick
-    msgIRC chan $ "!tell dest msg: leave a message to a beloved"
-    msgIRC chan $ "!do pwd action params: perform an action"
-    msgIRC chan $ "-   -   op user0 user1...: grant op privileges"
-    msgIRC chan $ "-   -   deop user0 user1...: revoke op privileges"
-    msgIRC chan $ "-   -   say blabla: make " ++ myNick ++ " say something"
-    msgIRC chan $ "-   -   kick user0 user1...: kick them all!"
-    msgIRC chan . showVersion $ version
-    msgIRC chan $ "written in Haskell by phaazon"
+    msgIRC from $ "!tell dest msg: leave a message to a beloved"
+    msgIRC from $ "!do pwd action params: perform an action"
+    msgIRC from $ "-   -   op user0 user1...: grant op privileges"
+    msgIRC from $ "-   -   deop user0 user1...: revoke op privileges"
+    msgIRC from $ "-   -   say blabla: make " ++ myNick ++ " say something"
+    msgIRC from $ "-   -   kick user0 user1...: kick them all!"
+    msgIRC from . showVersion $ version
+    msgIRC from $ "written in Haskell by phaazon"
 
 -- FIXME: host & ident
 tellStories :: String -> Session ()
