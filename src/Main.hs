@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,3,2] ["alcohol","IS","a","solution"]
+version = Version [0,3,4,0] ["Grolsch"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -273,10 +273,11 @@ doCmd from to arg = do
         | pwd /= userPwd = msgIRC from "wrong password!"
         | otherwise = executeAction chan
     executeAction chan
-        | action == "op"   = mapM_ (toIRC . (mode chan "+o"++)) actionParams
-        | action == "deop" = mapM_ (toIRC . (mode chan "-o"++)) actionParams
-        | action == "say"  = msgIRC chan (unwords actionParams)
-        | action == "kick" = mapM_ (toIRC . (("KICK " ++ chan ++ " ")++)) actionParams
+        | action == "op"     = mapM_ (toIRC . (mode chan "+o"++)) actionParams
+        | action == "deop"   = mapM_ (toIRC . (mode chan "-o"++)) actionParams
+        | action == "say"    = msgIRC chan (unwords actionParams)
+        | action == "kick"   = mapM_ (toIRC . (("KICK " ++ chan ++ " ")++)) actionParams
+        | action == "notice" = toIRC . unwords $ "NOTICE " : actionParams
         | otherwise = msgIRC from "unknown action"
     mode chan m = "MODE " ++ chan ++ " " ++ m ++ " "
 
@@ -287,8 +288,9 @@ helpCmd from _ _ = do
     msgIRC from $ "!do pwd action params: perform an action"
     msgIRC from $ "-   -   op user0 user1...: grant op privileges"
     msgIRC from $ "-   -   deop user0 user1...: revoke op privileges"
-    msgIRC from $ "-   -   say blabla: make " ++ myNick ++ " say something"
     msgIRC from $ "-   -   kick user0 user1...: kick them all!"
+    msgIRC from $ "-   -   say blabla: make " ++ myNick ++ " say something"
+    msgIRC from $ "-   -   notice recipient msg: notice a message to someone (can be a channel or a user)"
     msgIRC from . showVersion $ version
     msgIRC from $ "written in Haskell by phaazon"
 
