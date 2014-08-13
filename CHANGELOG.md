@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.3.4.0
+
+- Notices are now available! See the help for further information
+
 ### 0.3.3.2
 
 - Fallback `!tell` behavior – it was a bad idea; now we can use the command
