@@ -16,7 +16,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,3,4,0] ["Grolsch"]
+version = Version [0,4,0,0] ["Grolsch"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -65,6 +65,9 @@ fromIRC = asks conHandle >>= lift . hGetLine
 
 msgIRC :: String -> String -> Session ()
 msgIRC to msg = toIRC $ "PRIVMSG " ++ to ++ " :" ++ msg
+
+noticeIRC :: String -> String -> Session ()
+noticeIRC to msg = toIRC $ "NOTICE " ++ to ++ " :" ++ msg
 
 runFailable :: EitherT e Identity a -> Either e a
 runFailable = runIdentity . runEitherT
@@ -277,7 +280,7 @@ doCmd from to arg = do
         | action == "deop"   = mapM_ (toIRC . (mode chan "-o"++)) actionParams
         | action == "say"    = msgIRC chan (unwords actionParams)
         | action == "kick"   = mapM_ (toIRC . (("KICK " ++ chan ++ " ")++)) actionParams
-        | action == "notice" = toIRC . unwords $ "NOTICE " : actionParams
+        | action == "notice" = noticeIRC chan (unwords actionParams)
         | otherwise = msgIRC from "unknown action"
     mode chan m = "MODE " ++ chan ++ " " ++ m ++ " "
 
@@ -290,7 +293,7 @@ helpCmd from _ _ = do
     msgIRC from $ "-   -   deop user0 user1...: revoke op privileges"
     msgIRC from $ "-   -   kick user0 user1...: kick them all!"
     msgIRC from $ "-   -   say blabla: make " ++ myNick ++ " say something"
-    msgIRC from $ "-   -   notice recipient msg: notice a message to someone (can be a channel or a user)"
+    msgIRC from $ "-   -   notice msg: notice the channel something"
     msgIRC from . showVersion $ version
     msgIRC from $ "written in Haskell by phaazon"
 
