@@ -5,7 +5,8 @@ tellbot CHANGELOG
 
 - changed the format of *author* and *maintainer* fields in the cabal file;
 - general changelog formating;
-- added the changelog in the cabal file.
+- added the changelog in the cabal file;
+- added source repository information in the cabal file.
 
 ### 0.4.0.0
 
