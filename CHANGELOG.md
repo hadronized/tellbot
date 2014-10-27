@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.4.0.2
+
+- bug fix; nickname case sensitivity removed.
+
 ### 0.4.0.1
 
 - changed the format of *author* and *maintainer* fields in the cabal file;

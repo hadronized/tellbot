@@ -1,5 +1,5 @@
 name:                tellbot
-version:             0.4.0.1
+version:             0.4.0.2
 synopsis:            IRC tellbot
 description:         An IRC bot that can be used to create queuing message.
                      It also offers a simple administration IRC bot interface.
@@ -19,6 +19,8 @@ source-repository head
 
 executable tellbot
   main-is:             Main.hs
+
+  default-extensions:  FlexibleInstances
 
   build-depends:       base         >= 4.5 && < 4.8
                      , network      == 2.4.*
