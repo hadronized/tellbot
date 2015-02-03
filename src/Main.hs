@@ -17,7 +17,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,4,0,2] ["Chouffe"]
+version = Version [0,4,0,3] ["Boorey"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -316,4 +316,4 @@ tellStories nick = do
       tells  = intersperse (liftIO $ threadDelay floodDelay) chunks
     unless (null stories) $ do
       sequence_ tells
-      modify (M.delete nick)
+      modify (M.delete . show $ Nick nick)

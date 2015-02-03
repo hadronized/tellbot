@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.4.0.3
+
+- bug fix; tells undeletion has been fixed (sorry for bugging, Den!).
+
 ### 0.4.0.2
 
 - bug fix; nickname case sensitivity removed.
