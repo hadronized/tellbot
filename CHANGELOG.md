@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.5
+
+- dependencies updated.
+
 ### 0.4.0.3
 
 - bug fix; tells undeletion has been fixed (sorry for bugging, Den!).
