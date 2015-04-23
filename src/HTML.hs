@@ -1,20 +1,26 @@
 module HTML where
 
+import Control.Exception ( SomeException, catch )
+import Control.Monad ( guard )
+import Data.List ( isPrefixOf )
 import Network.HTTP ( getRequest, getResponseBody, simpleHTTP )
 import Text.Regex.Posix ( (=~) )
-import Text.Parsec
 
-htmlTitle :: String -> IO (Either String String)
-htmlTitle url = do
-    r <- simpleHTTP (getRequest prefixedURL)
-    either (return . Left) (return . Right . extractTitle) r
+htmlTitle :: String -> IO (Maybe String)
+htmlTitle url = flip catch handleException $
+    fmap extractTitle $ simpleHTTP (getRequest prefixedURL) >>= getResponseBody
   where
-    prefixedURL = "http" ++ dropWhile (/=':') url
+    prefixedURL = if "http://" `isPrefixOf` url || "https://" `isPrefixOf` url then url else "http://" ++ url
+    handleException :: SomeException -> IO (Maybe String)
+    handleException _ = pure Nothing
     
-extractTitle :: Response a -> String
-extractTitle rq = title
+extractTitle :: String -> Maybe String
+extractTitle body = do
+    guard (not $ null titleHTML)
+    pure $ dropAround (length "<title>") (length "</title>") titleHTML
   where
-    titleHTML   = getResponseBody rq =~ "<title>.*</title>"
-    title       = either noTitle id $ parse titleParser "" titleHTML
-    titleParser = between (string "<title>") (string "</title>") (many $ noneOf "\r\n")
-    noTitle     = "unknown title!"
+    titleHTML :: String
+    titleHTML = body =~ "<title>[^<]*</title>"
+
+dropAround :: Int -> Int -> String -> String
+dropAround s e = reverse . drop e . reverse . drop s
