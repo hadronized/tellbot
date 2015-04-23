@@ -1,6 +1,18 @@
 tellbot CHANGELOG
 =================
 
+### 0.5
+
+- dependencies updated.
+
+### 0.4.0.3
+
+- bug fix; tells undeletion has been fixed (sorry for bugging, Den!).
+
+### 0.4.0.2
+
+- bug fix; nickname case sensitivity removed.
+
 ### 0.4.0.1
 
 - changed the format of *author* and *maintainer* fields in the cabal file;

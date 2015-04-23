@@ -5,7 +5,8 @@ import Control.Monad
 import Control.Monad.Identity
 import Control.Monad.Trans
 import Control.Monad.Trans.RWS
-import Data.Bifunctor ( second )
+import Data.Bifunctor ( bimap, second )
+import Data.Char ( toLower )
 import Data.List ( intersperse )
 import Data.List.Split ( chunksOf, splitOn )
 import Data.Time.Clock ( getCurrentTime, utctDay )
@@ -16,7 +17,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,4,0,1] ["Grolsch"]
+version = Version [0,4,0,4] ["Boorey"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -36,6 +37,14 @@ data ConInfo = ConInfo {
     -- admin password
   , conPwd    :: String
   }
+
+newtype Nick = Nick { unNick :: String }
+
+instance Eq Nick where
+  Nick a == Nick b = map toLower a == map toLower b
+
+instance Show Nick where
+  show (Nick a) = map toLower a
 
 -- for each individual dudes, keep a list of stories to tell
 type Stories = M.Map String [String]
@@ -174,7 +183,7 @@ treatMsg :: String -> Session ()
 treatMsg msg = do
     nick <- asks conNick
     liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ content
-    unless ( null content || fromNick == nick ) $ do
+    unless ( null content || Nick fromNick == Nick nick ) $ do
       tellStories fromNick
       when ( head content == '!') $ do
         onCmd fromNick to (tail content)
@@ -183,7 +192,7 @@ treatMsg msg = do
 
 treatJoin :: String -> Session ()
 treatJoin _ = do
-    return ()
+  return ()
 {-
     nick <- asks conNick
     unless (from == nick) $ tellStories from
@@ -237,7 +246,7 @@ tellCmd from _ arg = do
   where
     treat chan
         | length arg > 1 && not (null msg) = do
-          nick <- asks conNick
+          nick <- fmap Nick (asks conNick)
           if fromNick == nick then
             msgIRC chan "I'll tell myself for sure pal!"
             else do
@@ -253,11 +262,11 @@ tellCmd from _ arg = do
                 else do
               -}
                   now <- liftIO $ utctDay `liftM` getCurrentTime
-                  modify . M.insertWith (flip (++)) fromNick $
-                    [show now ++ ", " ++ from ++ " told " ++ fromNick ++ ": " ++ msg]
+                  modify . M.insertWith (flip (++)) (show fromNick) $
+                    [show now ++ ", " ++ from ++ " told " ++ (unNick fromNick) ++ ": " ++ msg]
                   msgIRC from "\\_o<"
         | otherwise = msgIRC chan "nope!"
-    (fromNick,msg) = second tailSafe . break (==' ') $ arg
+    (fromNick,msg) = bimap Nick tailSafe . break (==' ') $ arg
 
 doCmd :: String -> String -> String -> Session ()
 doCmd from to arg = do
@@ -268,7 +277,7 @@ doCmd from to arg = do
   where
     treatDo chan myNick pwd
         | to == chan = msgIRC from "I'm sorry, I feel naked in public ;)"
-        | to == myNick && length args >= 3 = executeDo chan pwd
+        | Nick to == Nick myNick && length args >= 3 = executeDo chan pwd
         | otherwise = msgIRC from "huhu, something went terribly wrong!"
     args = words arg
     userPwd:action:actionParams = args
@@ -300,11 +309,11 @@ helpCmd from _ _ = do
 -- FIXME: host & ident
 tellStories :: String -> Session ()
 tellStories nick = do
-    stories <- gets (maybeToList . M.lookup nick)
+    stories <- gets (maybeToList . M.lookup (show $ Nick nick))
     let
       cstories = concat stories
       chunks = map (mapM_ $ msgIRC nick) . chunksOf floodThreshold $ cstories
       tells  = intersperse (liftIO $ threadDelay floodDelay) chunks
     unless (null stories) $ do
       sequence_ tells
-      modify (M.delete nick)
+      modify (M.delete . show $ Nick nick)
