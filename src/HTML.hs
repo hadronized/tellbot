@@ -1,5 +1,6 @@
 module HTML where
 
+import Control.Applicative ( pure )
 import Control.Exception ( SomeException, catch )
 import Control.Monad ( guard )
 import Data.List ( isPrefixOf )
