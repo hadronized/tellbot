@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.5.1
+
+- added an URL parser to detect what it contains
+
 ### 0.5
 
 - dependencies updated.

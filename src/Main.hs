@@ -9,15 +9,18 @@ import Data.Bifunctor ( bimap, second )
 import Data.Char ( toLower )
 import Data.List ( intersperse )
 import Data.List.Split ( chunksOf, splitOn )
+import Data.Foldable ( traverse_ )
 import Data.Time.Clock ( getCurrentTime, utctDay )
 import Data.Version
 import qualified Data.Map as M
+import HTML
 import Network
+import Text.Regex.Posix ( (=~) )
 import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,4,0,4] ["Boorey"]
+version = Version [0,5,1,0] ["Apfelschorle"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO
@@ -182,13 +185,21 @@ treatPing ping = do
 treatMsg :: String -> Session ()
 treatMsg msg = do
     nick <- asks conNick
+    chan <- asks conChan
     liftIO . putStrLn $ "from: " ++ fromNick ++ ", to: " ++ to ++ ": " ++ content
-    unless ( null content || Nick fromNick == Nick nick ) $ do
+    unless (null content || Nick fromNick == Nick nick) $ do
       tellStories fromNick
-      when ( head content == '!') $ do
+      let url = extractUrl content
+      unless (null url) $ do
+        title <- liftIO $ htmlTitle url
+        traverse_ (\t -> msgIRC chan $ "« " ++ t ++ " »") title
+      when (head content == '!') $ do
         onCmd fromNick to (tail content)
   where
     (fromNick,to,content) = emitterRecipientContent msg
+
+extractUrl :: String -> String
+extractUrl = (=~ "https?://[^ ]+")
 
 treatJoin :: String -> Session ()
 treatJoin _ = do
