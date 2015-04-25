@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.5.1.1
+
+- patch for old GHC versions (fixes uses of pure)
+
 ### 0.5.1
 
 - added an URL parser to detect what it contains
