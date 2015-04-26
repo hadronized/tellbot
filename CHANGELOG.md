@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.5.1.2
+
+- added HTML in other-modules (doesn’t compile otherwise)
+
 ### 0.5.1.1
 
 - patch for old GHC versions (fixes uses of pure)
