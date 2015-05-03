@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.5.1.3
+
+- added regex list support to filter trusted hosts
+
 ### 0.5.1.2
 
 - added HTML in other-modules (doesn’t compile otherwise)

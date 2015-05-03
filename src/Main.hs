@@ -64,6 +64,9 @@ floodDelay = 500000 -- 500ms
 reconnectDelay :: Int
 reconnectDelay = 1000000 -- 1s
 
+regPath :: FilePath
+regPath = "./regexps"
+
 session :: ConInfo -> Session a -> IO a
 session cinfo s = do
     (a,_,_) <- runRWST s cinfo M.empty
@@ -191,7 +194,7 @@ treatMsg msg = do
       tellStories fromNick
       let url = extractUrl content
       unless (null url) $ do
-        title <- liftIO $ htmlTitle url
+        title <- liftIO $ htmlTitle regPath url
         traverse_ (\t -> msgIRC chan $ "« " ++ t ++ " »") title
       when (head content == '!') $ do
         onCmd fromNick to (tail content)
