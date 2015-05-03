@@ -26,13 +26,16 @@ htmlTitle regPath url = do
 extractTitle :: String -> Maybe String
 extractTitle body = do
     guard (not $ null titleHTML)
-    pure $ dropAround (length "<title>") (length "</title>") titleHTML
+    pure $ chomp $ dropAround (length "<title>") (length "</title>") titleHTML
   where
     titleHTML :: String
     titleHTML = body =~ "<title>[^<]*</title>"
 
 dropAround :: Int -> Int -> String -> String
 dropAround s e = reverse . drop e . reverse . drop s
+
+chomp :: String -> String
+chomp = unwords . words
 
 -- Filter an URL so that we don’t make overviews of unknown hosts. Pretty
 -- cool to prevent people from going onto sensitive websites.
