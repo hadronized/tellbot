@@ -9,6 +9,7 @@ import Text.Regex.Posix ( (=~) )
 htmlTitle :: FilePath -> String -> IO (Maybe String)
 htmlTitle regPath url = do
     regexps <- flip catch handleException . fmap lines $ readFile regPath 
+    print regexps
     if (safeHost regexps url) then do
       title <- flip catch handleException $ fmap (extractTitle . show) $ simpleHttp httpPrefixedURL
       case title of
