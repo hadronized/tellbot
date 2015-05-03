@@ -35,7 +35,7 @@ dropAround :: Int -> Int -> String -> String
 dropAround s e = reverse . drop e . reverse . drop s
 
 chomp :: String -> String
-chomp = unwords . words . unlines . filter (not . null) . lines
+chomp = unwords . words . concat . lines
 
 -- Filter an URL so that we don’t make overviews of unknown hosts. Pretty
 -- cool to prevent people from going onto sensitive websites.
