@@ -18,8 +18,7 @@ htmlTitle regPath url = do
       case title of
         Just _ -> pure title
         Nothing -> do
-          putStrLn "enkuler"
-          flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
+          fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
       else
         pure Nothing
   where
