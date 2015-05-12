@@ -13,13 +13,12 @@ import Text.Regex.Posix ( (=~) )
 htmlTitle :: FilePath -> String -> IO (Maybe String)
 htmlTitle regPath url = do
     regexps <- flip catch handleException . fmap lines $ readFile regPath 
+    print regexps
     if (safeHost regexps url) then do
       title <- flip catch handleException $ fmap (extractTitle . concat . lines . unpack . decodeUtf8 . toStrict) $ simpleHttp httpPrefixedURL
       case title of
         Just _ -> pure title
-        Nothing -> do
-          putStrLn "enkuler"
-          flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
+        Nothing -> flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
       else
         pure Nothing
   where
