@@ -20,7 +20,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,5,1,3] ["Apfelschorle"]
+version = Version [0,5,1,4] ["Apfelschorle"]
 
 type Failable   = EitherT String Identity
 type FailableIO = EitherT String IO

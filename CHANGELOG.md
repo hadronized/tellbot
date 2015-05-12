@@ -1,6 +1,11 @@
 tellbot CHANGELOG
 =================
 
+### 0.5.1.4
+
+- fixed HTML entities to correctly decode them
+- removed newlines from title
+
 ### 0.5.1.3
 
 - added regex list support to filter trusted hosts
