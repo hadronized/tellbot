@@ -20,7 +20,7 @@ htmlTitle regPath url = do
         Just _ -> pure title
         Nothing -> do
           threadDelay 500
-          fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
+          flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
       else
         pure Nothing
   where
