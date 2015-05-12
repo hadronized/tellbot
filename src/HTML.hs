@@ -1,6 +1,7 @@
 module HTML where
 
 import Control.Exception ( SomeException, catch )
+import Control.Concurrent ( threadDelay )
 import Control.Monad ( guard )
 import Data.ByteString.Lazy ( toStrict )
 import Data.List ( isPrefixOf )
@@ -13,12 +14,13 @@ import Text.Regex.Posix ( (=~) )
 htmlTitle :: FilePath -> String -> IO (Maybe String)
 htmlTitle regPath url = do
     regexps <- flip catch handleException . fmap lines $ readFile regPath 
-    print regexps
     if (safeHost regexps url) then do
       title <- flip catch handleException $ fmap (extractTitle . concat . lines . unpack . decodeUtf8 . toStrict) $ simpleHttp httpPrefixedURL
       case title of
         Just _ -> pure title
-        Nothing -> flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
+        Nothing -> do
+          threadDelay 500
+          fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
       else
         pure Nothing
   where
