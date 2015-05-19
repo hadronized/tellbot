@@ -5,7 +5,6 @@ import Control.Concurrent ( threadDelay )
 import Control.Monad ( guard )
 import Data.ByteString.Lazy ( toStrict )
 import Data.List ( isPrefixOf )
-import Network.Connection (TLSSettings (..))
 import Network.HTTP.Conduit
 import Data.Text as T ( drop, dropEnd, pack, strip, unpack )
 import Data.Text.Encoding ( decodeUtf8 )
@@ -21,11 +20,7 @@ htmlTitle regPath url = do
         Just _ -> pure title
         Nothing -> do
           threadDelay 500
-          request <- parseUrl httpsPrefixedURL
-          let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
-          res <- withManagerSettings settings $ httpLbs request
-          --flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) . fromMaybe "" $ responseBody res
-          pure . extractTitle . unpack . decodeUtf8 . toStrict $ responseBody res
+          flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
       else
         pure Nothing
   where
