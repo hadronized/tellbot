@@ -1,12 +1,12 @@
 import Control.Concurrent ( threadDelay )
 import Control.Exception ( SomeException, try )
-import Control.Error
 import Control.Monad
-import Control.Monad.Identity
 import Control.Monad.Trans
+import Control.Monad.Trans.Except
 import Control.Monad.Trans.RWS
 import Data.Bifunctor ( bimap, second )
 import Data.Char ( toLower )
+import Data.Foldable ( toList )
 import Data.List ( intersperse )
 import Data.List.Split ( chunksOf, splitOn )
 import Data.Foldable ( traverse_ )
@@ -20,10 +20,10 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,5,1,4] ["Apfelschorle"]
+version = Version [0,6] ["Apfelschorle"]
 
-type Failable   = EitherT String Identity
-type FailableIO = EitherT String IO
+type Failable   = Except String
+type FailableIO = ExceptT String IO
 type Server     = String
 type Chan       = String
 type Session    = RWST ConInfo () Stories IO
@@ -84,11 +84,11 @@ msgIRC to msg = toIRC $ "PRIVMSG " ++ to ++ " :" ++ msg
 noticeIRC :: String -> String -> Session ()
 noticeIRC to msg = toIRC $ "NOTICE " ++ to ++ " :" ++ msg
 
-runFailable :: EitherT e Identity a -> Either e a
-runFailable = runIdentity . runEitherT
+runFailable :: Failable a -> Either String a
+runFailable = runExcept
 
-runFailableIO :: EitherT e IO a -> IO (Either e a)
-runFailableIO = runEitherT
+runFailableIO :: FailableIO a -> IO (Either String a)
+runFailableIO = runExceptT
 
 main :: IO ()
 main = do
@@ -101,14 +101,14 @@ main = do
 
 getChan :: [String] -> Failable (Server,Chan,String,String)
 getChan args = do
-    unless ( length args == 4 ) . left $
+    unless ( length args == 4 ) . throwE $
       "expected server host, chan, nick and admin password"
     let [host,chan,nick,pwd] = args
     return (host,chan,nick,pwd)
 
 start :: [String] -> FailableIO ()
 start args = do
-    (serv,chan,nick,pwd) <- hoistEither . runFailable $ getChan args
+    (serv,chan,nick,pwd) <- ExceptT . pure . runFailable $ getChan args
     liftIO . withSocketsDo $ connectIRC serv chan nick pwd
 
 connectIRC :: Server -> Chan -> String -> String -> IO ()
@@ -142,9 +142,6 @@ openChan = do
 
 joinChan :: Session ()
 joinChan = asks conChan >>= toIRC . ("JOIN "++)
-
-quitChan :: Session ()
-quitChan = toIRC "QUIT"
 
 ircSession :: Session ()
 ircSession = forever $ fromIRC >>= onContent . purgeContent
@@ -224,8 +221,8 @@ treatKick msg = do
       msgIRC chan $ from ++ ": you sonavabitch."
   where
     (from',_,content) = emitterRecipientContent msg
-    from               = tailSafe from'
-    kicked             = tailSafe $ dropWhile (/=':') content
+    from              = tailSafe from'
+    kicked            = tailSafe $ dropWhile (/=':') content
 
 -- Extract the emitter, the recipient and the message.
 emitterRecipientContent :: String -> (String,String,String)
@@ -323,7 +320,7 @@ helpCmd from _ _ = do
 -- FIXME: host & ident
 tellStories :: String -> Session ()
 tellStories nick = do
-    stories <- gets (maybeToList . M.lookup (show $ Nick nick))
+    stories <- gets (toList . M.lookup (show $ Nick nick))
     let
       cstories = concat stories
       chunks = map (mapM_ $ msgIRC nick) . chunksOf floodThreshold $ cstories
@@ -331,3 +328,13 @@ tellStories nick = do
     unless (null stories) $ do
       sequence_ tells
       modify (M.delete . show $ Nick nick)
+
+err :: (MonadIO m) => String -> m ()
+err = liftIO . hPutStr stderr
+
+errLn :: (MonadIO m) => String -> m ()
+errLn = liftIO . hPutStrLn stderr
+
+tailSafe :: [a] -> [a]
+tailSafe [] = []
+tailSafe (_:xs) = xs
