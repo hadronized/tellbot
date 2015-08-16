@@ -20,7 +20,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,6] ["Apfelschorle"]
+version = Version [0,6,0,1] ["Apfelschorle"]
 
 type Failable   = Except String
 type FailableIO = ExceptT String IO

@@ -1,6 +1,14 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.1
+
+- Fixed CHANGELOG.md.
+
+### 0.6
+
+- Dropped `errors` dependency.
+
 ### 0.5.1.4
 
 - fixed HTML entities to correctly decode them
