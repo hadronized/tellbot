@@ -1,6 +1,13 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.2
+
+#### Patch changes
+
+- Fixed UTF-8 issues with titles.
+- Fixed looping on failure (uncaught exception).
+
 ### 0.6.0.1
 
 - Fixed CHANGELOG.md.

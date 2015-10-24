@@ -1,50 +1,38 @@
 module HTML where
 
 import Control.Exception ( SomeException, catch )
-import Control.Concurrent ( threadDelay )
-import Control.Monad ( guard )
 import Data.ByteString.Lazy ( toStrict )
-import Data.List ( isPrefixOf )
 import Network.HTTP.Conduit
-import Data.Text as T ( drop, dropEnd, pack, strip, unpack )
+import Data.Text ( pack, strip, unpack )
 import Data.Text.Encoding ( decodeUtf8 )
 import Text.HTML.TagSoup
-import Text.Regex.Posix ( (=~) )
+import Text.Regex.PCRE ( (=~) )
 
 htmlTitle :: FilePath -> String -> IO (Maybe String)
-htmlTitle regPath url = do
-    regexps <- flip catch handleException . fmap lines $ readFile regPath 
+htmlTitle regPath url = flip catch handleException $ do
+    regexps <- fmap lines $ readFile regPath 
     if (safeHost regexps url) then do
-      title <- flip catch handleException $ fmap (extractTitle . concat . lines . unpack . decodeUtf8 . toStrict) $ simpleHttp httpPrefixedURL
-      case title of
-        Just _ -> pure title
-        Nothing -> do
-          threadDelay 500
-          flip catch handleException $ fmap (extractTitle . unpack . decodeUtf8 . toStrict) $ simpleHttp httpsPrefixedURL
+      putStrLn $ url ++ " is safe"
+      fmap (extractTitle . unpack . decodeUtf8 . toStrict) (simpleHttp url)
       else
         pure Nothing
   where
-    httpPrefixedURL = if "http://" `isPrefixOf` url then url else "http://" ++ url
-    httpsPrefixedURL = if "https://" `isPrefixOf` url then url else "https://" ++ url
-    handleException :: (Monoid m) => SomeException -> IO m
+    handleException :: SomeException -> IO (Maybe String)
     handleException _ = pure mempty
     
 extractTitle :: String -> Maybe String
-extractTitle body = do
-    guard (not $ null titleHTML)
-    pure . escape . chomp $ removeMarker titleHTML
-  where
-    titleHTML :: String
-    titleHTML = body =~ "<title>[^<]*</title>"
+extractTitle body =
+  case dropTillTitle (parseTags body) of
+    (TagText title:TagClose "title":_) -> pure (chomp $ "« " ++ title ++ " »")
+    _ -> Nothing
 
-removeMarker ::String -> String
-removeMarker = unpack . T.drop (length "<title>") . dropEnd (length "</title>") . pack
+dropTillTitle :: [Tag String] -> [Tag String]
+dropTillTitle [] = []
+dropTillTitle (TagOpen "title" _ : xs) = xs
+dropTillTitle (_:xs) = dropTillTitle xs
 
 chomp :: String -> String
 chomp = unpack . strip . pack
-
-escape :: String -> String
-escape = fromTagText . head . parseTags
 
 -- Filter an URL so that we don’t make overviews of unknown hosts. Pretty
 -- cool to prevent people from going onto sensitive websites.

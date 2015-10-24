@@ -14,12 +14,12 @@ import Data.Version
 import qualified Data.Map as M
 import HTML
 import Network
-import Text.Regex.Posix ( (=~) )
+import Text.Regex.PCRE ( (=~) )
 import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,6,0,1] ["Apfelschorle"]
+version = Version [0,6,0,2] ["Apfelschorle"]
 
 type Server     = String
 type Chan       = String
@@ -205,7 +205,7 @@ treatMsg msg = do
       let url = extractUrl content
       unless (null url) $ do
         title <- liftIO (htmlTitle htmlTitleRegPath url)
-        traverse_ (\t -> msgIRC chan $ "« " ++ t ++ " »") title
+        traverse_ (\t -> msgIRC chan t) title
       when (head content == '!') $ do
         onCmd emitter recipient (tail content)
   where
