@@ -23,7 +23,7 @@ htmlTitle regPath url = flip catch handleException $ do
 extractTitle :: String -> Maybe String
 extractTitle body =
   case dropTillTitle (parseTags body) of
-    (TagText title:TagClose "title":_) -> pure (chomp $ "« " ++ title ++ " »")
+    (TagText title:TagClose "title":_) -> pure (chomp $ "\ETX9« " ++ title ++ " »\SI")
     _ -> Nothing
 
 dropTillTitle :: [Tag String] -> [Tag String]

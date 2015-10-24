@@ -270,7 +270,7 @@ tellCmd emitter _ arg = do
           else do
             now <- liftIO $ utctDay `liftM` getCurrentTime
             modify . M.insertWith (flip (++)) (show emitterNick) $
-              [show now ++ ", " ++ emitter ++ " told " ++ (unNick emitterNick) ++ ": " ++ msg]
+              [show now ++ ", \STX\ETX6" ++ emitter ++ "\SI told \STX\ETX2" ++ (unNick emitterNick) ++ "\SI: " ++ msg]
             msgIRC emitter "\\_o<"
         | otherwise = msgIRC chan "nope!"
     (emitterNick,msg) = bimap Nick tailSafe . break (==' ') $ arg

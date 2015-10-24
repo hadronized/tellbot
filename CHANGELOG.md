@@ -1,6 +1,12 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.3
+
+#### Patch changes
+
+- Added colors!
+
 ### 0.6.0.2
 
 #### Patch changes
