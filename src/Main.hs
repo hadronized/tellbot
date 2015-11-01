@@ -19,7 +19,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,6,0,2] ["Apfelschorle"]
+version = Version [0,6,0,4] ["Apfelschorle"]
 
 type Server     = String
 type Chan       = String

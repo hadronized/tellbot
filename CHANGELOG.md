@@ -1,6 +1,12 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.4
+
+- Nicer colors for titles.
+    - Nicer colors for titles.
+- Fixed title (whitespaces trimming).
+
 ### 0.6.0.3
 
 #### Patch changes
