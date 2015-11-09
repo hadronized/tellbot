@@ -1,10 +1,15 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.5
+
+- Support for bifunctors-5.1.
+- Fixed whitespaces issues in tellbot.cabal.
+- Fixed useless line in CHANGELOG.md. 
+
 ### 0.6.0.4
 
 - Nicer colors for titles.
-    - Nicer colors for titles.
 - Fixed title (whitespaces trimming).
 
 ### 0.6.0.3
