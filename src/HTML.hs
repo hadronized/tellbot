@@ -2,6 +2,7 @@ module HTML where
 
 import Control.Exception ( SomeException, catch )
 import Data.ByteString.Lazy ( toStrict )
+import Data.Char
 import Network.HTTP.Conduit
 import Data.Text as T ( concat, lines, pack, strip, unpack )
 import Data.Text.Encoding ( decodeUtf8 )
@@ -32,7 +33,7 @@ dropTillTitle (TagOpen "title" _ : xs) = xs
 dropTillTitle (_:xs) = dropTillTitle xs
 
 chomp :: String -> String
-chomp = filter (`notElem` "\r\n") . unpack . strip . pack
+chomp = filter (\c -> isAlphaNum c || isPunctuation c || c == ' ') . unpack . strip . pack
 
 -- Filter an URL so that we don’t make overviews of unknown hosts. Pretty
 -- cool to prevent people from going onto sensitive websites.
