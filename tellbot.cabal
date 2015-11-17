@@ -1,5 +1,5 @@
 name:                tellbot
-version:             0.6.0.6
+version:             0.6.0.7
 synopsis:            IRC tellbot
 description:         An IRC bot that can be used to create queuing message.
                      It also offers a simple administration IRC bot interface.

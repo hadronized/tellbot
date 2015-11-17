@@ -1,6 +1,14 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.7
+
+- Fixed IRC injection in HTML title.
+
+### 0.6.0.6
+
+- Fixed IRC injection in HTML title.
+
 ### 0.6.0.5
 
 - Support for bifunctors-5.1.

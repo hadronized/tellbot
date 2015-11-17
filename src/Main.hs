@@ -4,7 +4,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans.RWS
 import Data.Bifunctor ( bimap, second )
-import Data.Char ( isAlphaNum, isPunctuation, toLower )
+import Data.Char ( toLower )
 import Data.Foldable ( toList )
 import Data.List ( intersperse )
 import Data.List.Split ( chunksOf, splitOn )
@@ -19,7 +19,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,6,0,6] ["Apfelschorle"]
+version = Version [0,6,0,7] ["Apfelschorle"]
 
 type Server     = String
 type Chan       = String
@@ -76,10 +76,8 @@ htmlTitleRegPath = "./regexps"
 -- That function embeds a naive protection again IRC commands injection.
 toIRC :: String -> Session ()
 toIRC msg = do
-    let txt = protect msg
-    unless (null txt) $ asks conHandle >>= lift . flip hPutStrLn txt
-  where
-    protect = takeWhile (\c -> isAlphaNum c || isPunctuation c || c == ' ')
+    liftIO . putStrLn $ "DEBUG: sending: '" ++ msg ++ "'"
+    unless (null msg) $ asks conHandle >>= lift . flip hPutStrLn msg
 
 -- Receive a line from IRC. The line is formatted using the IRC protocol (RFC 1459).
 fromIRC :: Session String
