@@ -4,7 +4,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans.RWS
 import Data.Bifunctor ( bimap, second )
-import Data.Char ( toLower )
+import Data.Char ( isAlphaNum, isPunctuation, toLower )
 import Data.Foldable ( toList )
 import Data.List ( intersperse )
 import Data.List.Split ( chunksOf, splitOn )
@@ -19,7 +19,7 @@ import System.Environment ( getArgs )
 import System.IO
 
 version :: Version
-version = Version [0,6,0,4] ["Apfelschorle"]
+version = Version [0,6,0,6] ["Apfelschorle"]
 
 type Server     = String
 type Chan       = String
@@ -72,8 +72,14 @@ htmlTitleRegPath :: FilePath
 htmlTitleRegPath = "./regexps"
 
 -- Send a message to IRC. That message should use the IRC protocol (RFC 1459).
+--
+-- That function embeds a naive protection again IRC commands injection.
 toIRC :: String -> Session ()
-toIRC msg = asks conHandle >>= lift . flip hPutStrLn msg
+toIRC msg = do
+    let txt = protect msg
+    unless (null txt) $ asks conHandle >>= lift . flip hPutStrLn txt
+  where
+    protect = takeWhile (\c -> isAlphaNum c || isPunctuation c || c == ' ')
 
 -- Receive a line from IRC. The line is formatted using the IRC protocol (RFC 1459).
 fromIRC :: Session String
@@ -81,12 +87,12 @@ fromIRC = asks conHandle >>= lift . hGetLine
 
 -- Send a message to someone in the current IRC session.
 msgIRC :: String -> String -> Session ()
-msgIRC to msg = toIRC $ "PRIVMSG " ++ to ++ " :" ++ msg
+msgIRC to msg = unless (null msg) . toIRC $ "PRIVMSG " ++ to ++ " :" ++ msg
 
 -- Notice a message to someone in the current IRC session. Can be a channel as well if the
 -- destination starts with a dash ('#').
 noticeIRC :: String -> String -> Session ()
-noticeIRC to msg = toIRC $ "NOTICE " ++ to ++ " :" ++ msg
+noticeIRC to msg = unless (null msg) . toIRC $ "NOTICE " ++ to ++ " :" ++ msg
 
 -- Parse a list of arguments to retrieve information about the connection.
 getConInfo :: [String] -> Either String (Server,Chan,String,String)
