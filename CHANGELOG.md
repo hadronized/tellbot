@@ -5,6 +5,10 @@ tellbot CHANGELOG
 
 - Fixed IRC colors change in HTML title.
 
+### 0.6.0.8
+
+- Fixed IRC colors change in HTML title.
+
 ### 0.6.0.7
 
 - Fixed IRC injection in HTML title.

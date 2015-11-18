@@ -24,7 +24,7 @@ htmlTitle regPath url = flip catch handleException $ do
 extractTitle :: String -> Maybe String
 extractTitle body =
   case dropTillTitle (parseTags body) of
-    (TagText title:TagClose "title":_) -> pure ("\ETX7« \ETX6" ++ chomp title ++ " \ETX7»\SI")
+    (TagText title:TagClose "title":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
     _ -> Nothing
 
 dropTillTitle :: [Tag String] -> [Tag String]
@@ -33,7 +33,7 @@ dropTillTitle (TagOpen "title" _ : xs) = xs
 dropTillTitle (_:xs) = dropTillTitle xs
 
 chomp :: String -> String
-chomp = filter (\c -> isAlphaNum c || isPunctuation c || c == ' ') . unpack . strip . pack
+chomp = filter (\c -> ord c >= 32 && (isAlphaNum c || isPunctuation c || c == ' ')) . unpack . strip . pack
 
 -- Filter an URL so that we don’t make overviews of unknown hosts. Pretty
 -- cool to prevent people from going onto sensitive websites.
