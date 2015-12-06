@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.10
+
+- Fixed exception reading stream (UTF-8 fail).
+
 ### 0.6.0.8
 
 - Fixed IRC colors change in HTML title.

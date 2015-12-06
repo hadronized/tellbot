@@ -1,6 +1,6 @@
 module HTML where
 
-import Control.Exception ( SomeException, catch )
+import Control.Exception ( SomeException, catch, evaluate )
 import Data.ByteString.Lazy ( toStrict )
 import Data.Char
 import Network.HTTP.Conduit
@@ -14,7 +14,8 @@ htmlTitle regPath url = flip catch handleException $ do
     regexps <- fmap Prelude.lines $ readFile regPath 
     if (safeHost regexps url) then do
       putStrLn $ url ++ " is safe"
-      fmap (extractTitle . unpack . T.concat . T.lines . decodeUtf8 . toStrict) (simpleHttp url)
+      resp <- simpleHttp url
+      evaluate $ extractTitle . unpack . T.concat . T.lines . decodeUtf8 $ toStrict resp
       else
         pure Nothing
   where
