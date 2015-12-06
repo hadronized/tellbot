@@ -1,5 +1,5 @@
 import Control.Concurrent ( threadDelay )
-import Control.Exception ( SomeException, try )
+import Control.Exception ( SomeException, catch, try )
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans.RWS
@@ -81,7 +81,10 @@ toIRC msg = do
 
 -- Receive a line from IRC. The line is formatted using the IRC protocol (RFC 1459).
 fromIRC :: Session String
-fromIRC = asks conHandle >>= lift . hGetLine
+fromIRC = asks conHandle >>= \h -> lift $ catch (hGetLine h) handleError
+  where
+    handleError :: SomeException -> IO String
+    handleError _ = pure ""
 
 -- Send a message to someone in the current IRC session.
 msgIRC :: String -> String -> Session ()
