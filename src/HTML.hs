@@ -19,7 +19,9 @@ htmlTitle regPath url = flip catch handleException $ do
         pure Nothing
   where
     handleException :: SomeException -> IO (Maybe String)
-    handleException _ = pure mempty
+    handleException e = do
+      putStrLn $ "Exception: " ++ show e
+      pure Nothing
     
 extractTitle :: String -> Maybe String
 extractTitle body =
