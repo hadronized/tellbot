@@ -14,7 +14,8 @@ htmlTitle regPath url = flip catch handleException $ do
     regexps <- fmap Prelude.lines $ readFile regPath 
     if (safeHost regexps url) then do
       putStrLn $ url ++ " is safe"
-      resp <- simpleHttp url
+      let url' = if url =~ "https?://www\\.youtube\\.com" then "http://www.getlinkinfo.com/info?link=" ++ url else url
+      resp <- simpleHttp url'
       evaluate $ extractTitle . unpack . T.concat . T.lines . decodeUtf8 $ toStrict resp
       else
         pure Nothing
@@ -27,12 +28,12 @@ htmlTitle regPath url = flip catch handleException $ do
 extractTitle :: String -> Maybe String
 extractTitle body =
   case dropTillTitle (parseTags body) of
-    (TagText title:TagClose "title":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
+    (TagText title:TagClose "b":TagClose "dd":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
     _ -> Nothing
 
 dropTillTitle :: [Tag String] -> [Tag String]
 dropTillTitle [] = []
-dropTillTitle (TagOpen "title" _ : xs) = xs
+dropTillTitle (TagOpen "dt" [("class","link-title")]:TagText _:TagClose "dt":TagText _:TagOpen "dd" []:TagOpen "b" []:xs) = xs
 dropTillTitle (_:xs) = dropTillTitle xs
 
 chomp :: String -> String
