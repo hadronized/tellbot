@@ -14,9 +14,13 @@ htmlTitle regPath url = flip catch handleException $ do
     regexps <- fmap Prelude.lines $ readFile regPath 
     if (safeHost regexps url) then do
       putStrLn $ url ++ " is safe"
-      let url' = if url =~ "https?://www\\.youtube\\.com" then "http://www.getlinkinfo.com/info?link=" ++ url else url
-      resp <- simpleHttp url'
-      evaluate $ extractTitle . unpack . T.concat . T.lines . decodeUtf8 $ toStrict resp
+      if url =~ "https?://www\\.youtube\\.com"
+      then do
+        resp <- simpleHttp ("http://www.getlinkinfo.com/info?link=" ++ url)
+        evaluate $ extractTitle True . unpack . T.concat . T.lines . decodeUtf8 $ toStrict resp
+      else do
+        resp <- simpleHttp url
+        evaluate $ extractTitle False . unpack . T.concat . T.lines . decodeUtf8 $ toStrict resp
       else
         pure Nothing
   where
@@ -25,16 +29,19 @@ htmlTitle regPath url = flip catch handleException $ do
       putStrLn $ "Exception: " ++ show e
       pure Nothing
     
-extractTitle :: String -> Maybe String
-extractTitle body =
-  case dropTillTitle (parseTags body) of
-    (TagText title:TagClose "b":TagClose "dd":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
-    _ -> Nothing
+extractTitle :: Bool -> String -> Maybe String
+extractTitle True body = case dropTillTitle True (parseTags body) of
+  (TagText title:TagClose "b":TagClose "dd":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
+  _ -> Nothing
+extractTitle False body = case dropTillTitle False (parseTags body) of
+  (TagText title:TagClose "title":_) -> pure ("\ETX7«\ETX6 " ++ chomp title ++ " \ETX7»\SI")
+  _ -> Nothing
 
-dropTillTitle :: [Tag String] -> [Tag String]
-dropTillTitle [] = []
-dropTillTitle (TagOpen "dt" [("class","link-title")]:TagText _:TagClose "dt":TagText _:TagOpen "dd" []:TagOpen "b" []:xs) = xs
-dropTillTitle (_:xs) = dropTillTitle xs
+dropTillTitle :: Bool -> [Tag String] -> [Tag String]
+dropTillTitle _ [] = []
+dropTillTitle True (TagOpen "dt" [("class","link-title")]:TagText _:TagClose "dt":TagText _:TagOpen "dd" []:TagOpen "b" []:xs) = xs
+dropTillTitle False (TagOpen "title" _:xs) = xs
+dropTillTitle b (_:xs) = dropTillTitle b xs
 
 chomp :: String -> String
 chomp = filter (\c -> ord c >= 32 && (isAlphaNum c || isPunctuation c || c == ' ')) . unpack . strip . pack
