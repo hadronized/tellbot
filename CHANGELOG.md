@@ -1,6 +1,12 @@
 tellbot CHANGELOG
 =================
 
+### 0.6.0.12
+
+- Support for transformers-0.6 and bifunctors-5.3.
+
+### 0.6.0.11
+
 ### 0.6.0.10
 
 - Fixed exception reading stream (UTF-8 fail).
