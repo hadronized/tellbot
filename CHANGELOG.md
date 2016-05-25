@@ -1,6 +1,10 @@
 tellbot CHANGELOG
 =================
 
+## 0.6.1
+
+- GHC 8.0.1 support.
+
 ### 0.6.0.12
 
 - Support for transformers-0.6 and bifunctors-5.3.
